@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collections Early-Warning</title>
+<meta name="description" content="Daily automated collections monitoring for a nano-lender: portfolio at risk, employer alerts, payment reconciliation, a late-payment model and agent call lists.">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>Collections Early-Warning System</h1>
+        <p class="sub">Automated daily run · salary-linked nano-loans</p>
+      </div>
+    </div>
+    <div class="stamp">
+      <span id="asof">Loading…</span>
+      <span class="badge" title="All borrowers, loans and payments are generated for this demo">Synthetic demo data</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="grid hero">
+    <article class="card brief">
+      <h2>CEO morning brief</h2>
+      <ul id="brief"></ul>
+    </article>
+    <article class="card today">
+      <h2>Today's work</h2>
+      <div class="big"><span id="calls-total">–</span><small>agent calls</small></div>
+      <div class="big alt"><span id="sms-total">–</span><small>automatic SMS reminders</small></div>
+      <ul id="by-action" class="mini"></ul>
+      <p class="dl">Download: <a href="call_lists/all_agents.csv">all call lists</a> · <a href="call_lists/sms_reminders.csv">SMS list</a> · <a href="ceo_brief.md">brief (.md)</a></p>
+    </article>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid two">
+    <article class="card">
+      <h2>Portfolio at risk</h2>
+      <p class="note">Share of the active book more than 30 / 90 days past due, last 180 days</p>
+      <div class="chart"><canvas id="par-chart"></canvas></div>
+    </article>
+    <article class="card">
+      <h2>Cash collected vs falling due</h2>
+      <p class="note">Daily, last 60 days. Due spikes follow disbursement dates; late payers arrive later.</p>
+      <div class="chart"><canvas id="cash-chart"></canvas></div>
+    </article>
+  </section>
+
+  <section class="grid wide-left">
+    <article class="card">
+      <h2>Employer watchlist</h2>
+      <p class="note">Late = not paid within <span class="grace"></span> days of the due date. Recent = instalments due 1–3 weeks ago (grace period over); normal = the 90 days before that.</p>
+      <div class="table-wrap"><table id="partners"></table></div>
+    </article>
+    <article class="card">
+      <h2>Where the book stands</h2>
+      <p class="note">Outstanding balance by days past due</p>
+      <div class="chart short"><canvas id="bucket-chart"></canvas></div>
+      <p class="note" id="writeoff"></p>
+    </article>
+  </section>
+
+  <section class="grid two">
+    <article class="card">
+      <h2>Roll rates (30 days)</h2>
+      <p class="note">Of the loans in each bucket 30 days ago, where are they today?</p>
+      <div class="table-wrap"><table id="roll" class="matrix"></table></div>
+    </article>
+    <article class="card">
+      <h2>Payment exceptions</h2>
+      <p class="note">Found by automatic reconciliation in the last 7 days. These need a person before they can be applied.</p>
+      <div id="recon-summary" class="pills"></div>
+      <div class="table-wrap"><table id="recon"></table></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <h2>Today's priority calls</h2>
+    <p class="note">A sample from today's lists: the top overdue accounts, then the borrowers the model expects to pay late (called before their due date). Risk = predicted chance the next instalment is paid late. Borrower names are not stored in this demo.</p>
+    <div class="table-wrap"><table id="calls"></table></div>
+  </section>
+
+  <section class="grid two">
+    <article class="card">
+      <h2>Early-warning model</h2>
+      <p class="note">Logistic regression predicting whether an unpaid instalment due in the next 14 days will be paid more than 7 days late. Tested on the latest month, which the model never saw.</p>
+      <div class="model-stats" id="model-stats"></div>
+      <div class="chart short"><canvas id="driver-chart"></canvas></div>
+    </article>
+    <article class="card how">
+      <h2>How it runs</h2>
+      <ol>
+        <li><b>Around 07:15 PKT every day</b> GitHub Actions starts the pipeline. Nobody has to press anything.</li>
+        <li><b>Reconcile</b> the payment feed (JazzCash, Easypaisa, bank, payroll) against the loan book in SQL: duplicates, unknown references, overpaid loans.</li>
+        <li><b>Age the book</b>: SQL applies payments oldest-instalment-first and works out days past due for every loan.</li>
+        <li><b>Watch employers</b>: compares each partner's late-payment rate with its own normal level.</li>
+        <li><b>Predict</b> which upcoming instalments will be paid late (Python, scikit-learn).</li>
+        <li><b>Plan the day</b>: 30 calls per agent, with slots reserved for prevention; SMS for borrowers slightly late or at medium risk.</li>
+        <li><b>Publish</b> this page, the CSV call lists and the brief.</li>
+      </ol>
+      <p class="note">Python · SQL (SQLite) · pandas · scikit-learn · GitHub Actions · GitHub Pages</p>
+    </article>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p>Built by <a href="https://www.linkedin.com/in/abdul-majeed-memon/">Abdul Majeed</a> · <a href="https://github.com/abdulmajeed-crypto/loan-collections-early-warning">Source code on GitHub</a></p>
+  <p id="note" class="note"></p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
